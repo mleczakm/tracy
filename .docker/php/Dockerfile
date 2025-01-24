@@ -7,7 +7,7 @@ ENV COMPOSER_HOME=/.composer
 WORKDIR /app
 
 RUN --mount=type=bind,from=mlocati/php-extension-installer:latest,source=/usr/bin/install-php-extensions,target=/usr/local/bin/install-php-extensions \
-    IPE_SWOOLE_WITHOUT_IOURING=1 install-php-extensions ds intl opcache swoole
+    install-php-extensions ds intl opcache swoole
 
 CMD ["/app/server"]
 
