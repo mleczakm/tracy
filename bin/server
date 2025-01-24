@@ -1,0 +1,31 @@
+#!/usr/bin/env php
+<?php
+
+
+declare(strict_types=1);
+
+use App\Action\IndexAction;
+use App\Message\NullTask;
+use App\MessageHandler\NullTaskHandler;
+use App\Server\Factory;
+use App\Task\Handler;
+use Ds\Map;
+
+require __DIR__ . '/../config/bootstrap.php';
+
+$server = Factory::create($_SERVER['APP_ENV']);
+
+$logger = App\Log\Factory::create(filter_var($_SERVER['APP_DEBUG'], FILTER_VALIDATE_BOOLEAN));
+
+$indexAction = new IndexAction($server, $logger);
+$server->on('Request', $indexAction);
+
+$handler = new Handler($logger, new Map([NullTask::class => [new NullTaskHandler($logger), 'handle']]));
+
+$server->on('WorkerStart', [$handler, 'start']);
+$server->on('Task', [$handler, 'handle']);
+$server->on('Finish', [$handler, 'finish']);
+
+//$server->on('Start', fn() => $server->tick(1000, new TickTocker($logger)));
+
+$server->start();

@@ -1,0 +1,13 @@
+{
+  "name": "PHP Development Container",
+  "dockerFile": "../.docker/php/Dockerfile",
+  "context": "..",
+  "runArgs": ["--init"],
+  "postCreateCommand": "composer install",
+  "remoteUser": "${localEnv:UID}",
+  "build": {
+    "args": {
+    },
+    "target": "php-dev-base"
+  }
+}
