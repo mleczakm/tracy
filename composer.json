@@ -7,7 +7,10 @@
         "ext-ds": "*",
         "ext-iconv": "*",
         "ext-json": "*",
+        "ext-simplexml": "*",
         "ext-swoole": "*",
+        "flow-php/etl": "^0.5.2",
+        "flow-php/etl-adapter-xml": "^0.5.2",
         "psr/log": "^3.0"
     },
     "autoload": {

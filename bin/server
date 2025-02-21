@@ -5,27 +5,37 @@
 declare(strict_types=1);
 
 use App\Action\IndexAction;
-use App\Message\NullTask;
-use App\MessageHandler\NullTaskHandler;
+use App\Message\IncomingGpx;
+use App\MessageHandler\IncomingGpxHandler;
 use App\Server\Factory;
 use App\Task\Handler;
 use Ds\Map;
 
 require __DIR__ . '/../config/bootstrap.php';
 
-$server = Factory::create($_SERVER['APP_ENV']);
-
 $logger = App\Log\Factory::create(filter_var($_SERVER['APP_DEBUG'], FILTER_VALIDATE_BOOLEAN));
+
+$server = Factory::create($_SERVER['APP_ENV']);
 
 $indexAction = new IndexAction($server, $logger);
 $server->on('Request', $indexAction);
 
-$handler = new Handler($logger, new Map([NullTask::class => [new NullTaskHandler($logger), 'handle']]));
+$handler = new Handler($logger, new Map([IncomingGpx::class => [new IncomingGpxHandler($logger), 'handle']]));
 
 $server->on('WorkerStart', [$handler, 'start']);
 $server->on('Task', [$handler, 'handle']);
 $server->on('Finish', [$handler, 'finish']);
 
-//$server->on('Start', fn() => $server->tick(1000, new TickTocker($logger)));
+$server->on('Start', fn() => Swoole\Timer::tick(1000, function (int $timerId) use ($server, $logger) {
+    $logger->debug('Tick!');
+    $gpxFiles = glob('resources/*.*');
+    foreach ($gpxFiles as $file) {
+        $filename = basename($file);
+        //Mark file as being processed, by moving to different directory
+        rename($file, 'resources/processing/' . $filename);
+        // Emit IncomingGpx message onto internal queue with filename
+        $server->task(new IncomingGpx($filename));
+    }
+}));
 
 $server->start();
